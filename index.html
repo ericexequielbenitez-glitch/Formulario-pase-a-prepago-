@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Solicitud de Llamado - Personal</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #1fa2d6, #2bc0e4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  background: white;
+  width: 420px;
+  padding: 35px;
+  border-radius: 12px;
+  box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+.logo img {
+  width: 150px;
+  margin-bottom: 15px;
+}
+
+h2 {
+  margin-bottom: 25px;
+  font-weight: 600;
+}
+
+.form-group {
+  text-align: left;
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  display: block;
+  margin-bottom: 6px;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+input[readonly] {
+  background-color: #f3f3f3;
+  cursor: not-allowed;
+}
+
+button {
+  width: 100%;
+  padding: 13px;
+  margin-top: 10px;
+  background-color: #0099cc;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #7fbfd4;
+  cursor: not-allowed;
+}
+
+button:hover:enabled {
+  background-color: #007aa3;
+}
+
+.message-container {
+  display: none;
+  margin-top: 25px;
+  text-align: center;
+}
+
+.message-container img {
+  width: 65px;
+  margin-bottom: 12px;
+}
+
+.case-number {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 8px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="logo">
+    <img src="logo.png" alt="Personal Logo">
+  </div>
+
+  <h2>Solicitud de Llamado</h2>
+
+  <form id="formulario">
+
+    <div class="form-group">
+      <input type="text" name="dni" placeholder="DNI del titular" required>
+    </div>
+
+    <div class="form-group">
+      <input type="text" name="nombre" placeholder="Nombre completo" required>
+    </div>
+
+    <div class="form-group">
+      <input type="tel" name="telefono" placeholder="Teléfono de contacto" required>
+    </div>
+
+    <!-- MOTIVO BLOQUEADO -->
+    <div class="form-group">
+      <label>Motivo del llamado</label>
+      <input type="text" name="motivo" value="Baja del servicio Móvil" readonly>
+    </div>
+
+    <div class="form-group">
+      <label>Fecha a llamar</label>
+      <input type="date" name="fecha_llamar" required>
+    </div>
+
+    <div class="form-group">
+      <label>Horario preferido</label>
+      <select name="horario_llamar" required>
+        <option value="">Seleccionar horario</option>
+        <option value="Lo antes posible">Lo antes posible</option>
+        <option value="A la mañana">A la mañana</option>
+        <option value="A la tarde">A la tarde</option>
+        <option value="A la noche">A la noche</option>
+      </select>
+    </div>
+
+    <button type="submit">Solicitar llamado</button>
+
+  </form>
+
+  <div class="message-container" id="message"></div>
+
+</div>
+
+<script>
+
+const scriptURL = "https://script.google.com/macros/s/AKfycbz1Figw7Pcy4efOiHbKPxwLrfFBQBy4qtoJesCcpxjiujRIs7kWbaiJbLLKg8KMMrIHpw/exec";
+
+const form = document.getElementById("formulario");
+const message = document.getElementById("message");
+const button = form.querySelector("button");
+
+let enviado = false;
+
+form.addEventListener("submit", function(e) {
+  e.preventDefault();
+
+  if (enviado) return;
+  enviado = true;
+
+  button.disabled = true;
+  button.innerText = "Enviando...";
+
+  message.style.display = "none";
+  message.innerHTML = "";
+
+  const formData = new FormData(form);
+  const data = Object.fromEntries(formData.entries());
+
+  fetch(scriptURL, {
+    method: "POST",
+    body: JSON.stringify(data)
+  })
+  .then(response => response.text())
+  .then(result => {
+
+    form.style.display = "none";
+
+    if (result === "YA_EXISTE") {
+
+      message.innerHTML = `
+        <img src="x-roja.png">
+        <div>
+          Ya registraste una solicitud en las últimas 24 horas.
+        </div>
+      `;
+
+    } else {
+
+      message.innerHTML = `
+        <img src="tilde-verificacion.png">
+        <div>Número de caso</div>
+        <div class="case-number">${result}</div>
+      `;
+    }
+
+    message.style.display = "block";
+  })
+  .catch(error => {
+      alert("Error al enviar el formulario.");
+      console.error(error);
+  });
+
+});
+</script>
+
+</body>
+</html>
